@@ -1,4 +1,4 @@
-param([switch]$Isolated, [switch]$Accounts, [switch]$Pester)
+param([switch]$Isolated, [switch]$Accounts, [switch]$Pester, [switch]$Resources)
 $ErrorActionPreference = 'Stop'
 
 if(-not $Isolated) {
@@ -33,3 +33,15 @@ if(Test-Path -Path $localModulesPath) {
 
 DownloadModule -predicate ($all -or $Accounts) -path $localModulesPath -moduleName 'Az.Accounts' -versionMinimum '${$project.accountsVersionMinimum}'
 DownloadModule -predicate ($all -or $Pester) -path $localModulesPath -moduleName 'Pester' -versionMinimum ''
+
+$tools = Join-Path $PSScriptRoot 'tools'
+$resourceDir = Join-Path $tools 'Resources'
+$resourceModule = Join-Path $resourceDir 'Az.Resources.psm1'
+
+if ($Resources.IsPresent -and (-not (Test-Path -Path $resourceModule))) {
+  Write-Host -ForegroundColor Green "Building local Resource module used for test..."
+  Set-Location $resourceDir
+  autorest-beta
+  .\build-module.ps1
+  Set-Location $PSScriptRoot
+}
